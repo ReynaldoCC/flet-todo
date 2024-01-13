@@ -116,17 +116,26 @@ class TodoApp(ft.UserControl):
         self.update()
 
     def task_status_change(self, task):
+        count = 0
+        for task in self.tasks.controls[:]:
+            if task.completed:
+                count += 1
+        if count == len(self.tasks.controls):
+            self.toggle_complete.value = True
+        else:
+            self.toggle_complete.value = False
         self.update()
 
     def build(self):
         self.new_task = ft.TextField(hint_text="Whats needs to be done?", expand=True)
         self.tasks = ft.Column()
-        toggle_complete = ft.Checkbox(value=False, tooltip="toggle all")
+        self.toggle_complete = ft.Checkbox(value=False, tooltip="toggle all", on_change=self.toggle_all_clicked)
         self.items_left = ft.Text("0/0 active items left")
 
         self.filter = ft.Tabs(
             selected_index=0,
             on_change=self.tabs_changed,
+            expand=True,
             tabs=[ft.Tab(text="all"), ft.Tab(text="active"), ft.Tab(text="completed")],
         )
 
@@ -143,7 +152,14 @@ class TodoApp(ft.UserControl):
                 ft.Column(
                     spacing=25,
                     controls=[
-                        self.filter,
+                        ft.Row(
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                self.toggle_complete,
+                                self.filter,
+                            ]
+                        ),
                         self.tasks,
                         ft.Row(
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -175,6 +191,14 @@ class TodoApp(ft.UserControl):
         for task in self.tasks.controls[:]:
             if task.completed:
                 self.task_delete(task)
+
+    def toggle_all_clicked(self, e):
+        for task in self.tasks.controls[:]:
+            if task.visible:
+                task.completed = self.toggle_complete.value
+                task.display_task.value = self.toggle_complete.value
+                task.update()
+        self.update()
 
 
 def main(page: ft.Page):
