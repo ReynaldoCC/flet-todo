@@ -99,12 +99,17 @@ class TodoApp(ft.UserControl):
 
     def update(self):
         status = self.filter.tabs[self.filter.selected_index].text
+        count = total = 0
         for task in self.tasks.controls:
             task.visible = (
                     status == "all"
                     or (status == "active" and task.completed is False)
                     or (status == "completed" and task.completed)
             )
+            if not task.completed:
+                count += 1
+            total += 1
+        self.items_left.value = f"{count}/{total} active item{'' if count == 1 else 's'} left"
         super().update()
 
     def tabs_changed(self, e):
@@ -116,6 +121,8 @@ class TodoApp(ft.UserControl):
     def build(self):
         self.new_task = ft.TextField(hint_text="Whats needs to be done?", expand=True)
         self.tasks = ft.Column()
+        toggle_complete = ft.Checkbox(value=False, tooltip="toggle all")
+        self.items_left = ft.Text("0/0 active items left")
 
         self.filter = ft.Tabs(
             selected_index=0,
@@ -138,6 +145,16 @@ class TodoApp(ft.UserControl):
                     controls=[
                         self.filter,
                         self.tasks,
+                        ft.Row(
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                self.items_left,
+                                ft.OutlinedButton(
+                                    text="Clear completed", on_click=self.clear_clicked
+                                ),
+                            ],
+                        ),
                     ]
                 ),
             ],
@@ -154,12 +171,16 @@ class TodoApp(ft.UserControl):
             self.new_task.value = ""
             self.update()
 
+    def clear_clicked(self, e):
+        for task in self.tasks.controls[:]:
+            if task.completed:
+                self.task_delete(task)
+
 
 def main(page: ft.Page):
     page.title = "ToDo App"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.update()
-
 
     # create application instance
     todo = TodoApp()
